@@ -1,16 +1,13 @@
 import streamlit as st
 import openai
-
-# Sidebar for API Key and Links
-with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-    "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
-    "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
+import os
 
 # Streamlit App Title
 st.title("Shripanditji - Your Virtual Assistant for Poojas and Rituals")
 st.caption("💬 A spiritual chatbot powered by OpenAI")
+
+# Fetch the OpenAI API key from Streamlit Secrets
+openai_api_key = st.secrets["OPENAI_API_KEY"]
 
 # Initialize conversation state
 if "messages" not in st.session_state:
@@ -24,10 +21,6 @@ for msg in st.session_state["messages"]:
 
 # Input for user prompt
 if prompt := st.chat_input():
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
-        st.stop()
-
     openai.api_key = openai_api_key
     st.session_state["messages"].append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
