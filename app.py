@@ -60,13 +60,18 @@ else:
                     guide = response.choices[0].message.content.strip()
                     return guide
 
+                except openai.error.AuthenticationError:
+                    return "Authentication error: Please check your OpenAI API key."
                 except openai.error.OpenAIError as e:
-                    return f"Error generating pooja guide: {str(e)}"
+                    return f"OpenAI API error: {str(e)}"
 
             # Generate and Display the Guide
             guide = generate_pooja_guide(api_key, pooja_name, language)
-            st.markdown("### Pooja Guide")
-            st.write(guide)
+            if "error" in guide.lower():
+                st.error(guide)
+            else:
+                st.markdown("### Pooja Guide")
+                st.write(guide)
         else:
             st.error("Please provide both the name of the pooja and your preferred language.")
 
