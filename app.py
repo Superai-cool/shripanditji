@@ -1,7 +1,6 @@
 import streamlit as st
 import openai
 import os
-from streamlit_chat import message
 
 # Streamlit App Title
 st.title("Shripanditji - Your Virtual Assistant for Poojas and Rituals")
@@ -22,16 +21,17 @@ else:
             {"role": "system", "content": "You are Shripanditji, a spiritual assistant providing guidance for Hindu poojas and mantras."}
         ]
 
-    # Display existing messages
+    # Display existing messages in the chat
+    st.markdown("### Chat")
     for i, msg in enumerate(st.session_state.messages):
         if msg["role"] == "user":
-            message(msg["content"], is_user=True, key=f"user_{i}")
+            st.markdown(f"**You:** {msg['content']}")
         else:
-            message(msg["content"], key=f"bot_{i}")
+            st.markdown(f"**Shripanditji:** {msg['content']}")
 
     # User input for chatbot
     with st.form("chat_input", clear_on_submit=True):
-        user_input = st.text_area("Type your question or request (e.g., 'Generate a guide for Lakshmi Pooja in Hindi'):")
+        user_input = st.text_area("Type your question or request (e.g., 'Generate a guide for Lakshmi Pooja in Hindi'):", key="user_input")
         submitted = st.form_submit_button("Send")
 
     if submitted and user_input:
@@ -55,7 +55,7 @@ else:
         st.session_state.messages.append({"role": "assistant", "content": bot_response})
 
         # Display bot response
-        message(bot_response, key=f"bot_{len(st.session_state.messages) - 1}")
+        st.markdown(f"**Shripanditji:** {bot_response}")
 
 st.markdown(
     "---\n**Note:** If your requested pooja guide or mantra explanation is unavailable, please consult your local priest for assistance."
