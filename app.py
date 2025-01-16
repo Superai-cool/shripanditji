@@ -12,16 +12,19 @@ st.markdown(
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    st.error("Error: OpenAI API key not found. Please set it as an environment variable in your deployment platform.")
-    st.stop()  # Stop further execution if API key is not found
-else:
-    # Validate API Key
-    try:
-        openai.api_key = api_key
-        openai.Model.list()  # Test API key by listing available models
-    except openai.error.AuthenticationError:
-        st.error("Error: Invalid OpenAI API key. Please check your API key.")
-        st.stop()
+    st.error("Error: OpenAI API key not found. Please set it as an environment variable.")
+    st.stop()  # Stop execution if the API key is missing
+
+# Validate API Key
+try:
+    openai.api_key = api_key
+    openai.Model.list()  # Attempt a simple API call to validate the key
+except openai.error.AuthenticationError:
+    st.error("Error: Invalid OpenAI API key. Please check and update your API key.")
+    st.stop()  # Stop execution if the API key is invalid
+except openai.error.OpenAIError as e:
+    st.error(f"Error: Unable to connect to OpenAI API. Details: {str(e)}")
+    st.stop()
 
 # User Input: Pooja Name
 pooja_name = st.text_input("Please specify the name of the pooja you wish to perform:")
@@ -72,13 +75,4 @@ if st.button("Get Pooja Guide"):
         # Generate and Display the Guide
         guide = generate_pooja_guide(api_key, pooja_name, language)
         if guide:
-            st.markdown("### Pooja Guide")
-            st.write(guide)
-        else:
-            st.error("Could not generate the pooja guide. Please try again.")
-    else:
-        st.error("Please provide both the name of the pooja and your preferred language.")
-
-st.markdown(
-    "---\n**Note:** If your requested pooja guide is unavailable, please consult your local priest for assistance."
-)
+            st.m
