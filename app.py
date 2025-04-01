@@ -1,78 +1,44 @@
 import streamlit as st
 import openai
-import os
+from io import BytesIO
+from PIL import Image
+import base64
 
-# Streamlit App Title
-st.title("Shripanditji - Your Virtual Assistant for Poojas and Rituals")
-st.caption("💬 A spiritual chatbot powered by OpenAI")
+# Streamlit app title
+st.title("Ghibli Style Image Generator")
 
-# Fetch the OpenAI API key from Streamlit Secrets
-openai_api_key = st.secrets["OPENAI_API_KEY"]
+# User input for OpenAI API Key
+api_key = st.text_input("Enter your OpenAI API Key", type="password")
 
-# Initialize conversation state
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [
-        {"role": "assistant", "content": "Namaste! How can I assist you with your pooja or mantra guidance today?"}
-    ]
+# File uploader for user image
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
-# Dropdown for Pooja Name
-pooja_list = [
-    "Satyanarayan Pooja", "Lakshmi Pooja", "Ganesh Chaturthi Pooja", "Durga Pooja", "Hanuman Pooja",
-    "Shivratri Pooja", "Navratri Pooja", "Diwali Pooja", "Kalash Sthapana", "Chhath Pooja",
-    "Kuber Pooja", "Vishnu Pooja", "Gayatri Pooja", "Rudra Abhishek", "Saraswati Pooja",
-    "Ram Navami Pooja", "Tulsi Vivah", "Makar Sankranti Pooja", "Pitru Tarpan", "Bhoomi Poojan"
-]
-pooja_name = st.selectbox("Select a Pooja Name:", options=pooja_list + ["Custom"])
-if pooja_name == "Custom":
-    pooja_name = st.text_input("Enter the Pooja Name:")
-
-# Dropdown for Language
-language_list = ["Hindi", "English", "Marathi", "Tamil", "Gujarati"]
-language = st.selectbox("Select a Language:", options=language_list + ["Custom"])
-if language == "Custom":
-    language = st.text_input("Enter the Language:")
-
-# Generate guide if both inputs are provided
-if st.button("Generate Pooja Guide"):
-    if pooja_name.strip() and language.strip():
-        openai.api_key = openai_api_key
-
-        # Prepare prompt for OpenAI
-        prompt = (
-            f"You are a Virtual Pooja Assistant. Provide a step-by-step guide for performing {pooja_name} in {language}. "
-            "Include details such as mantras, aartis, shlokas, and systematic instructions for preparation, execution, and conclusion. "
-            "Ensure cultural authenticity and a devotional tone while promoting environmentally friendly practices."
+if uploaded_file and api_key:
+    # Display the uploaded image
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+    
+    # Convert image to base64
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    
+    # Generate image using OpenAI API
+    st.write("Generating Ghibli-style image...")
+    
+    try:
+        openai.api_key = api_key
+        response = openai.Image.create_edit(
+            image=img_str,
+            prompt="Convert this image into Studio Ghibli style.",
+            size="1024x1024",
+            n=1
         )
-
-        # Append user input to conversation history
-        st.session_state["messages"].append({"role": "user", "content": f"Pooja: {pooja_name}, Language: {language}"})
-
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an expert Virtual Pooja Assistant."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            msg = response.choices[0].message.content
-            st.session_state["messages"].append({"role": "assistant", "content": msg})
-            st.markdown(f"### Pooja Guide for {pooja_name} in {language}")
-            st.write(msg)
-        except Exception as e:
-            st.error(f"Error: {e}")
-    else:
-        st.error("Please provide both a Pooja Name and a Language.")
-
-# Display chat messages
-st.markdown("---")
-st.markdown("### Chat History")
-for msg in st.session_state["messages"]:
-    if msg["role"] == "user":
-        st.markdown(f"**You:** {msg['content']}")
-    else:
-        st.markdown(f"**Shripanditji:** {msg['content']}")
-
-st.markdown(
-    "---\n**Note:** If your requested pooja guide or mantra explanation is unavailable, please consult your local priest for assistance."
-)
+        
+        ghibli_image_url = response['data'][0]['url']
+        st.image(ghibli_image_url, caption="Ghibli Style Image", use_column_width=True)
+    
+    except Exception as e:
+        st.error(f"Error: {e}")
+else:
+    st.warning("Please upload an image and enter your OpenAI API key.")
