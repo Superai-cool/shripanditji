@@ -16,7 +16,7 @@ uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 if uploaded_file:
     # Display the uploaded image
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
     
     # Convert image to base64
     buffered = BytesIO()
@@ -36,7 +36,7 @@ if uploaded_file:
         )
         
         ghibli_image_url = response['data'][0]['url']
-        st.image(ghibli_image_url, caption="Ghibli Style Image", use_column_width=True)
+        st.image(ghibli_image_url, caption="Ghibli Style Image", use_container_width=True)
     
     except Exception as e:
         st.error(f"Error: {e}")
