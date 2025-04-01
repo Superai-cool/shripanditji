@@ -11,15 +11,18 @@ st.title("Ghibli Style Image Generator with Ghibli Diffusion")
 # API Configuration (Replicate or Hugging Face)
 API_URL = "https://api.replicate.com/v1/predictions"
 MODEL_VERSION = "stability-ai/sd-ghibli:latest"  # Example model for Ghibli diffusion
-API_KEY = st.secrets["replicate_api_key"]  # Store API key in Streamlit secrets
-HEADERS = {
-    "Authorization": f"Token {API_KEY}",
-    "Content-Type": "application/json"
-}
 
+# Get API key from secrets or user input
+API_KEY = st.secrets["replicate_api_key"] if "replicate_api_key" in st.secrets else None
 if not API_KEY:
-    st.error("API key not found. Please add it to Streamlit secrets.")
-else:
+    API_KEY = st.text_input("Enter your Replicate API Key:", type="password")
+
+if API_KEY:
+    HEADERS = {
+        "Authorization": f"Token {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
     # File uploader for user image
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
@@ -46,7 +49,7 @@ else:
         try:
             response = requests.post(API_URL, json=payload, headers=HEADERS)
             response.raise_for_status()
-            output_url = response.json()["output"]
+            output_url = response.json().get("output")
             
             if output_url:
                 st.image(output_url, caption="Ghibli Style Image", use_container_width=True)
@@ -57,3 +60,5 @@ else:
             st.error(f"API Error: {e}")
     else:
         st.warning("Please upload an image.")
+else:
+    st.warning("Please enter your Replicate API key to continue.")
