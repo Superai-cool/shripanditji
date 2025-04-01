@@ -17,8 +17,11 @@ else:
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        # Convert uploaded file to PNG format
+        # Open the uploaded image
         image = Image.open(uploaded_file).convert("RGBA")
+        
+        # Resize image to 1024x1024 (required by OpenAI API)
+        image = image.resize((1024, 1024))
         
         # Validate file size (less than 4MB)
         uploaded_file.seek(0, 2)  # Move cursor to end of file to check size
@@ -31,7 +34,7 @@ else:
             # Display the uploaded image
             st.image(image, caption="Uploaded Image", use_container_width=True)
             
-            # Save image as a temporary file
+            # Save image as a temporary PNG file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
                 image.save(temp_file, format="PNG")
                 temp_file_path = temp_file.name
@@ -42,8 +45,8 @@ else:
             try:
                 openai.api_key = api_key
                 with open(temp_file_path, "rb") as img_file:
-                    response = openai.Image.create_edit(
-                        image=img_file,
+                    response = openai.Image.create(
+                        model="dall-e-2",
                         prompt="Convert this image into Studio Ghibli style.",
                         size="1024x1024",
                         n=1
@@ -53,7 +56,7 @@ else:
                 st.image(ghibli_image_url, caption="Ghibli Style Image", use_container_width=True)
             
             except openai.error.InvalidRequestError as e:
-                st.error("OpenAI API rejected the image. Please try a different image.")
+                st.error("OpenAI API rejected the image. Ensure it's a valid image and try again.")
             except Exception as e:
                 st.error(f"Error: {e}")
     else:
