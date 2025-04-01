@@ -7,13 +7,13 @@ import base64
 # Streamlit app title
 st.title("Ghibli Style Image Generator")
 
-# User input for OpenAI API Key
-api_key = st.text_input("Enter your OpenAI API Key", type="password")
+# Access OpenAI API Key from Streamlit secrets
+api_key = st.secrets["openai_api_key"]
 
 # File uploader for user image
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
-if uploaded_file and api_key:
+if uploaded_file:
     # Display the uploaded image
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
@@ -41,4 +41,4 @@ if uploaded_file and api_key:
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    st.warning("Please upload an image and enter your OpenAI API key.")
+    st.warning("Please upload an image.")
