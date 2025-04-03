@@ -1,52 +1,36 @@
 import streamlit as st
 import openai
+import os
 
-# Streamlit config
-st.set_page_config(page_title="Learn Kannada", page_icon="🗣️", layout="centered")
+# App Title
+st.title("🗣️ Welcome to the Learn Kannada Assistant")
 
-# Custom styling
-st.markdown("""
-    <style>
-        .main {
-            background-color: #fffaf0;
-        }
-        textarea, input {
-            font-size: 16px !important;
-        }
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;
-            padding: 10px 24px;
-        }
-        .stMarkdown h4 {
-            color: #1a73e8;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# Fetch API key from environment
+api_key = os.getenv("OPENAI_API_KEY")
 
-# Title & description
-st.title("🗣️ Learn Kannada")
-st.markdown("#### A friendly assistant to help you learn practical Kannada – step by step!")
+if not api_key:
+    st.error("❌ Error: OpenAI API key not found. Please set it as an environment variable named 'OPENAI_API_KEY'.")
+else:
+    # User input: query
+    user_query = st.text_area("💬 Ask your question in any language:", placeholder="E.g., How do I say 'Good morning' in Kannada?")
 
-# API Key input
-openai_api_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
+    # Submit button
+    if st.button("🔍 Get Kannada Translation"):
+        if user_query.strip():
+            def get_kannada_response(api_key, user_input):
+                """
+                Calls OpenAI GPT to return a structured Kannada learning response.
 
-# User question input
-user_query = st.text_area("💬 Type your question in any language", placeholder="E.g., How do I say 'Where is the bus stop?' in Kannada?", height=120)
+                Parameters:
+                    api_key (str): OpenAI API key
+                    user_input (str): User's multilingual query
 
-# Translate button
-if st.button("🔍 Get Kannada Translation"):
-    if not openai_api_key:
-        st.warning("⚠️ Please enter your OpenAI API key.")
-    elif not user_query.strip():
-        st.warning("⚠️ Please enter a question to translate.")
-    else:
-        openai.api_key = openai_api_key
+                Returns:
+                    str: Structured four-part Kannada learning output
+                """
+                openai.api_key = api_key
 
-        # Custom system prompt
-        system_prompt = """
+                system_prompt = """
 You are "Learn Kannada" – a custom GPT designed to help users learn local, conversational Kannada in a clear, friendly, and structured way.
 
 Users can ask questions in any language, and you must respond using this consistent four-part format:
@@ -67,26 +51,26 @@ Always end your response with:
 Powered by WROGN Men Watches | [Buy Now](https://web.lehlah.club/s/gld8o5)
 """
 
-        # Query OpenAI
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": system_prompt.strip()},
-                    {"role": "user", "content": user_query.strip()}
-                ],
-                temperature=0.7
-            )
-            reply = response.choices[0].message.content
+                try:
+                    response = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": system_prompt.strip()},
+                            {"role": "user", "content": user_input.strip()}
+                        ],
+                        temperature=0.7
+                    )
 
-            # Show response
-            st.markdown("---")
-            st.markdown("### ✅ Your Kannada Lesson")
-            st.markdown(reply)
+                    result = response.choices[0].message.content.strip()
+                    return result
 
-        except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
+                except openai.error.OpenAIError as e:
+                    return f"❌ Error from OpenAI: {str(e)}"
 
-# Footer
-st.markdown("---")
-st.markdown("<center><small>✨ Made with ❤️ to help you speak Kannada like a local!</small></center>", unsafe_allow_html=True)
+            # Generate and display output
+            output = get_kannada_response(api_key, user_query)
+
+            st.markdown("### ✅ Kannada Learning Response")
+            st.markdown(output)
+        else:
+            st.warning("⚠️ Please enter a question.")
