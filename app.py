@@ -1,16 +1,19 @@
+import streamlit as st
 import openai
 import os
 
-# Fetch OpenAI API key from environment variable
+# Set Streamlit page configuration
+st.set_page_config(page_title="Learn Kannada", page_icon="🗣️", layout="centered")
+
+# Load OpenAI API key from environment
 api_key = os.getenv("OPENAI_API_KEY")
-
 if not api_key:
-    raise ValueError("❌ OpenAI API key not found. Please set it as an environment variable named 'OPENAI_API_KEY'.")
+    st.error("❌ OpenAI API key not found. Please set it as an environment variable 'OPENAI_API_KEY'.")
+    st.stop()
 
-# Set the API key
 openai.api_key = api_key
 
-# Define the system prompt for the custom GPT
+# System prompt for Kannada learning GPT
 LEARN_KANNADA_PROMPT = """
 You are "Learn Kannada" – a custom GPT designed to help users learn local, conversational Kannada in a clear, friendly, and structured way.
 
@@ -32,20 +35,14 @@ Always end your response with:
 Powered by WROGN Men Watches | [Buy Now](https://web.lehlah.club/s/gld8o5)
 """
 
-def get_kannada_response(user_query: str, model: str = "gpt-3.5-turbo") -> str:
+# Function to get response from OpenAI
+def get_kannada_response(user_query: str) -> str:
     """
-    Sends a query to the Learn Kannada GPT and returns a structured response.
-
-    Args:
-        user_query (str): The user's question or phrase to learn in Kannada.
-        model (str): The OpenAI model to use. Default is 'gpt-3.5-turbo'.
-
-    Returns:
-        str: The GPT response containing Kannada translation, transliteration, explanation, and example sentence.
+    Sends user query to OpenAI and returns structured Kannada learning output.
     """
     try:
         response = openai.ChatCompletion.create(
-            model=model,
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": LEARN_KANNADA_PROMPT.strip()},
                 {"role": "user", "content": user_query.strip()}
@@ -53,23 +50,48 @@ def get_kannada_response(user_query: str, model: str = "gpt-3.5-turbo") -> str:
             temperature=0.7
         )
         return response.choices[0].message.content.strip()
-
     except openai.error.OpenAIError as e:
-        return f"❌ Error from OpenAI: {str(e)}"
+        return f"❌ OpenAI Error: {str(e)}"
 
-# Optional: CLI usage for testing or local use
-if __name__ == "__main__":
-    print("🗣️ Learn Kannada - CLI Assistant")
-    print("Type your query below (e.g., How do I say 'Good night' in Kannada?)")
-    print("Type 'exit' to quit.\n")
+# ----------- Streamlit App UI -----------
 
-    while True:
-        user_input = input(">> ")
-        if user_input.lower().strip() == "exit":
-            print("👋 Goodbye! Keep learning Kannada!")
-            break
-        elif not user_input.strip():
-            print("⚠️ Please enter a valid question.")
-            continue
-        reply = get_kannada_response(user_input)
-        print("\n" + reply + "\n" + "-"*50 + "\n")
+# Custom style
+st.markdown("""
+    <style>
+        .main {
+            background-color: #fffaf0;
+        }
+        .stTextArea textarea {
+            font-size: 16px;
+        }
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            padding: 10px 24px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Header
+st.title("🗣️ Learn Kannada")
+st.markdown("##### Friendly assistant to help you learn conversational Kannada")
+
+# User input
+user_query = st.text_area("💬 Type your question (in any language)", placeholder="E.g., How do I say 'Thank you' in Kannada?", height=120)
+
+# Submit button
+if st.button("🔍 Translate"):
+    if not user_query.strip():
+        st.warning("⚠️ Please enter a question.")
+    else:
+        with st.spinner("Translating..."):
+            response = get_kannada_response(user_query)
+        st.markdown("---")
+        st.markdown("### ✅ Kannada Learning Result")
+        st.markdown(response)
+
+# Footer
+st.markdown("---")
+st.markdown("<center><small>✨ Made with ❤️ to help you speak Kannada like a local!</small></center>", unsafe_allow_html=True)
