@@ -1,36 +1,17 @@
-import streamlit as st
 import openai
 import os
 
-# App Title
-st.title("🗣️ Welcome to the Learn Kannada Assistant")
-
-# Fetch API key from environment
+# Fetch OpenAI API key from environment variable
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    st.error("❌ Error: OpenAI API key not found. Please set it as an environment variable named 'OPENAI_API_KEY'.")
-else:
-    # User input: query
-    user_query = st.text_area("💬 Ask your question in any language:", placeholder="E.g., How do I say 'Good morning' in Kannada?")
+    raise ValueError("❌ OpenAI API key not found. Please set it as an environment variable named 'OPENAI_API_KEY'.")
 
-    # Submit button
-    if st.button("🔍 Get Kannada Translation"):
-        if user_query.strip():
-            def get_kannada_response(api_key, user_input):
-                """
-                Calls OpenAI GPT to return a structured Kannada learning response.
+# Set the API key
+openai.api_key = api_key
 
-                Parameters:
-                    api_key (str): OpenAI API key
-                    user_input (str): User's multilingual query
-
-                Returns:
-                    str: Structured four-part Kannada learning output
-                """
-                openai.api_key = api_key
-
-                system_prompt = """
+# Define the system prompt for the custom GPT
+LEARN_KANNADA_PROMPT = """
 You are "Learn Kannada" – a custom GPT designed to help users learn local, conversational Kannada in a clear, friendly, and structured way.
 
 Users can ask questions in any language, and you must respond using this consistent four-part format:
@@ -51,26 +32,44 @@ Always end your response with:
 Powered by WROGN Men Watches | [Buy Now](https://web.lehlah.club/s/gld8o5)
 """
 
-                try:
-                    response = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "system", "content": system_prompt.strip()},
-                            {"role": "user", "content": user_input.strip()}
-                        ],
-                        temperature=0.7
-                    )
+def get_kannada_response(user_query: str, model: str = "gpt-3.5-turbo") -> str:
+    """
+    Sends a query to the Learn Kannada GPT and returns a structured response.
 
-                    result = response.choices[0].message.content.strip()
-                    return result
+    Args:
+        user_query (str): The user's question or phrase to learn in Kannada.
+        model (str): The OpenAI model to use. Default is 'gpt-3.5-turbo'.
 
-                except openai.error.OpenAIError as e:
-                    return f"❌ Error from OpenAI: {str(e)}"
+    Returns:
+        str: The GPT response containing Kannada translation, transliteration, explanation, and example sentence.
+    """
+    try:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": LEARN_KANNADA_PROMPT.strip()},
+                {"role": "user", "content": user_query.strip()}
+            ],
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
 
-            # Generate and display output
-            output = get_kannada_response(api_key, user_query)
+    except openai.error.OpenAIError as e:
+        return f"❌ Error from OpenAI: {str(e)}"
 
-            st.markdown("### ✅ Kannada Learning Response")
-            st.markdown(output)
-        else:
-            st.warning("⚠️ Please enter a question.")
+# Optional: CLI usage for testing or local use
+if __name__ == "__main__":
+    print("🗣️ Learn Kannada - CLI Assistant")
+    print("Type your query below (e.g., How do I say 'Good night' in Kannada?)")
+    print("Type 'exit' to quit.\n")
+
+    while True:
+        user_input = input(">> ")
+        if user_input.lower().strip() == "exit":
+            print("👋 Goodbye! Keep learning Kannada!")
+            break
+        elif not user_input.strip():
+            print("⚠️ Please enter a valid question.")
+            continue
+        reply = get_kannada_response(user_input)
+        print("\n" + reply + "\n" + "-"*50 + "\n")
